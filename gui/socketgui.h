@@ -3,6 +3,11 @@
 
 #include <QWidget>
 
+enum class SocketType{
+    SERVER = 0,
+    CLIENT = 1
+};
+
 namespace Ui {
 class SocketGui;
 }
@@ -21,12 +26,19 @@ public:
 signals:
     void closeButtonClicked(uint32_t pUniqueId);
 
-private slots:
-    void on_pushButton_4_clicked();
+
 
 private:
     Ui::SocketGui *ui;
     uint32_t mUniqueId;
+
+    SocketType mSocketType = SocketType::SERVER;
+
+
+
+    void initGui();
+
+    QString ipPlaceHolderText()const;
 };
 
 #endif // SOCKETGUI_H
