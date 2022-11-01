@@ -3,20 +3,24 @@
 
 #include <QObject>
 #include <QHash>
+#include <QAbstractSocket>
 
 class QTcpServer;
 class QTcpSocket;
 
 class ETCPServer : public QObject
 {
+    Q_OBJECT
 public:
     explicit ETCPServer(QString pHostAdress, quint16 pPort, QObject* parent = nullptr);
+    virtual ~ETCPServer();
+
     void init();
     bool hasConnection() const;
 
 signals:
     void dataReceived(const QByteArray& pData);
-    void connectionStateChanged(const QString& ip, uint16_t port, int state);
+    void connectionStateChanged(const QString& ip, uint16_t port, QAbstractSocket::SocketState state);
 
 public slots:
     void writeData(const QByteArray& pData);

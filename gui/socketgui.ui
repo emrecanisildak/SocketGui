@@ -33,7 +33,7 @@
      <item>
       <widget class="QPushButton" name="buttonClose">
        <property name="text">
-        <string>Close</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -66,6 +66,20 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Status</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelConnection">
+       <property name="text">
+        <string>Not Connected</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

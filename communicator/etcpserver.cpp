@@ -14,10 +14,17 @@ ETCPServer::ETCPServer(QString pHostAdress, quint16 pPort, QObject *parent):
 
 }
 
+ETCPServer::~ETCPServer()
+{
+    qDebug()<<"Close TCP Server"<<mHostAdress<<"   "<<mPort;
+    mServer->close();
+    std::for_each(mSockets.begin(),mSockets.end(),std::default_delete<QTcpSocket>());
+}
+
 void ETCPServer::init()
 {
     mServer = new QTcpServer(this);
-    connect(mServer, SIGNAL(newConnection()), SLOT(onNewConnection()));
+    connect(mServer, &QTcpServer::newConnection,this, &ETCPServer::onNewConnection);
 
     QHostAddress addr;
     if (addr.setAddress(mHostAdress))
@@ -86,6 +93,8 @@ void ETCPServer::onNewConnection()
                 mSockets.removeOne(sender);
             }
 
+            connectionStateChanged(mHostAdress,mPort,pState);
+
         });
 
         // Error Occured
@@ -106,5 +115,5 @@ void ETCPServer::onNewConnection()
 void ETCPServer::onReadyRead()
 {
     QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
-   // emit dataReceived(sender->readAll());
+    emit dataReceived(sender->readAll());
 }

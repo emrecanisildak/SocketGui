@@ -5,19 +5,32 @@
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 
+#include "communicator/etcpclient.h"
+#include "communicator/etcpserver.h"
+
 SocketGui::SocketGui(uint32_t mId, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SocketGui),
     mUniqueId(mId)
 {
     ui->setupUi(this);
+
     initGui();
+
+    setConnection(false);
 
 }
 
 SocketGui::~SocketGui()
 {
     qDebug()<<"Socket Gui close"<<mUniqueId;
+
+    if(mClient)
+        delete mClient;
+
+    if(mServer)
+        delete mServer;
+
     delete ui;
 }
 
@@ -28,6 +41,14 @@ uint32_t SocketGui::uniqueId() const
 
 void SocketGui::initGui()
 {
+    // Clsoe Button
+    ui->buttonClose->setFixedSize(50,50);
+    ui->buttonClose->setIcon(QIcon(":/icons/CLOSE.png"));
+    ui->buttonClose->setIconSize(QSize(50,50));
+    ui->buttonClose->setToolTip(tr("Close"));
+    ui->buttonClose->setStyleSheet("QPushButton{background-color:rgba(0,0,0,0); } QPushButton:hover{border:1px solid #ff0000; border-radius:5px;}");
+
+
     // Signal Slots..
     connect(ui->buttonClose, &QPushButton::clicked, this, [this](bool checked){
         emit closeButtonClicked(mUniqueId);
@@ -41,6 +62,44 @@ void SocketGui::initGui()
     connect(ui->radioButtonClient, &QRadioButton::clicked,[this](bool checked){
         mSocketType =  SocketType::CLIENT;
         ui->lineEdit_ip->setPlaceholderText(ipPlaceHolderText());
+    });
+
+    connect(ui->buttonConnect, &QPushButton::clicked, [this](bool checked)
+    {
+        if(mSocketType ==  SocketType::CLIENT)
+        {
+            auto ip = ui->lineEdit_ip->text();
+            auto port = ui->lineEdit_port->text();
+
+            mClient = new ETCPClient(ip,port.toInt());
+            mClient->init();
+
+            connect(mClient, &ETCPClient::connectionStateChanged,this,[this](const QString& ip, uint16_t port, QAbstractSocket::SocketState state)
+            {
+                if(state == QAbstractSocket::SocketState::ConnectedState)
+                    setConnection(true);
+                else
+                    setConnection(false);
+            });
+
+        }
+        else
+        {
+            auto ip = ui->lineEdit_ip->text();
+            auto port = ui->lineEdit_port->text();
+
+            mServer = new ETCPServer(ip,port.toInt());
+            mServer->init();
+
+
+            connect(mServer, &ETCPServer::connectionStateChanged,this,[this](const QString& ip, uint16_t port, QAbstractSocket::SocketState state)
+            {
+                if(state == QAbstractSocket::SocketState::ConnectedState)
+                    setConnection(true);
+                else
+                    setConnection(false);
+            });
+        }
     });
 
 
@@ -76,7 +135,25 @@ void SocketGui::initGui()
 
     // Size
     ui->buttonConnect->setFixedWidth(50);
+    ui->labelConnection->setFixedSize(50,50);
 
+
+}
+
+void SocketGui::setConnection(bool isConnected)
+{
+    if(isConnected)
+        ui->labelConnection->setPixmap(QPixmap(":/icons/STATUS_OK.png").scaled(30,30,Qt::KeepAspectRatio));
+    else
+        ui->labelConnection->setPixmap(QPixmap(":/icons/STATUS_NOK.png").scaled(30,30,Qt::KeepAspectRatio));
+}
+
+void SocketGui::setSocketType(SocketType pSocketType)
+{
+    if(mSocketType == pSocketType)
+        return;
+
+    mSocketType = pSocketType;
 }
 
 QString SocketGui::ipPlaceHolderText() const

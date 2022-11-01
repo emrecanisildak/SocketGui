@@ -8,9 +8,20 @@ enum class SocketType{
     CLIENT = 1
 };
 
+enum class Errors{
+    EMPTY_IP,
+    EMPTY_PORT,
+    EMPTY_IP_PORT,
+    INVALID_IP,
+    SOCKET_ERRORS
+};
+
 namespace Ui {
 class SocketGui;
 }
+
+class ETCPClient;
+class ETCPServer;
 
 class SocketGui : public QWidget
 {
@@ -32,11 +43,16 @@ private:
     Ui::SocketGui *ui;
     uint32_t mUniqueId;
 
+    ETCPClient* mClient = nullptr;
+    ETCPServer* mServer = nullptr;
+
     SocketType mSocketType = SocketType::SERVER;
 
 
 
     void initGui();
+    void setConnection(bool isConnected);
+    void setSocketType(SocketType pSocketType);
 
     QString ipPlaceHolderText()const;
 };

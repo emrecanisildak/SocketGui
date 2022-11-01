@@ -12,12 +12,14 @@ class ETCPClient : public QObject
     Q_OBJECT
 public:
     explicit ETCPClient(QString pHostAdress, quint16 pPort,QObject *parent = nullptr);
+    virtual ~ETCPClient();
+
     void init();
     bool isConnected() const;
 
 signals:
     void dataReceived(const QByteArray& pData);
-    void connectionStateChanged(const QString& ip, uint16_t port, int state);
+    void connectionStateChanged(const QString& ip, uint16_t port, QAbstractSocket::SocketState state);
 
 public slots:
     void writeData(const QByteArray& pData);

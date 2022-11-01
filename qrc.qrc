@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/STATUS_NOK.png</file>
+        <file>icons/STATUS_OK.png</file>
+        <file>icons/CLOSE.png</file>
+    </qresource>
+</RCC>
