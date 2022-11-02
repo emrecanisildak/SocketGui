@@ -16,7 +16,7 @@ ETCPServer::ETCPServer(QString pHostAdress, quint16 pPort, QObject *parent):
 
 ETCPServer::~ETCPServer()
 {
-    qDebug()<<"Close TCP Server"<<mHostAdress<<"   "<<mPort;
+    qDebug()<<"[ETCPServer] --  Close TCP Server"<<mHostAdress<<"   "<<mPort;
     mServer->close();
     std::for_each(mSockets.begin(),mSockets.end(),std::default_delete<QTcpSocket>());
 }
@@ -24,28 +24,55 @@ ETCPServer::~ETCPServer()
 void ETCPServer::init()
 {
     mServer = new QTcpServer(this);
-    connect(mServer, &QTcpServer::newConnection,this, &ETCPServer::onNewConnection);
+    connect(mServer, &QTcpServer::newConnection ,this,&ETCPServer::onNewConnection);
 
     QHostAddress addr;
     if (addr.setAddress(mHostAdress))
     {
         mServer->listen(addr, mPort);
 
-        qInfo() <<"Tcp Server listen addr:" << mHostAdress
-               << "port:" << mPort;
+        qInfo() <<"[ETCPServer] --   Listening..." << mHostAdress
+               << " " << mPort;
     }
     else
     {
         mServer->listen(QHostAddress::Any, mPort);
 
-        qInfo() <<"Tcp Server listen addr: Ip::Any"
-               << "port:" << mPort;
+        qInfo() <<"[ETCPServer] --  Listening Any IP..."
+               << "  " << mPort<<"(Not valid IP Adress may be setted invalid ip!!)";
     }
 }
 
 bool ETCPServer::hasConnection() const
 {
     return mSockets.size();
+}
+
+void ETCPServer::closeHostService()
+{
+    mServer->close();
+}
+
+void ETCPServer::listenClient(QString pHostAdress, quint16 pPort)
+{
+    mHostAdress = pHostAdress;
+    mPort = pPort;
+
+    QHostAddress addr;
+    if (addr.setAddress(mHostAdress))
+    {
+        mServer->listen(addr, mPort);
+
+        qInfo() <<"[ETCPServer] --   Listening..." << mHostAdress
+               << " " << mPort;
+    }
+    else
+    {
+        mServer->listen(QHostAddress::Any, mPort);
+
+        qInfo() <<"[ETCPServer] --  Listening Any IP..."
+               << "  " << mPort<<"(Not valid IP Adress may be setted invalid ip!!)";
+    }
 }
 
 void ETCPServer::writeData(const QByteArray &pArray)
@@ -70,30 +97,14 @@ void ETCPServer::onNewConnection()
         {
             QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
 
-            if(pState == QAbstractSocket::ConnectedState)
-            {
-                qDebug()<<"Ip: "<<sender->peerAddress()
-                       <<"Port: "<<sender->peerPort()
-                      <<"connected.";
+            qDebug()<<"[ETCPServer] -- state changed "<<pState
+                   <<sender->peerAddress()<<" "<<
+                     sender->peerPort();
 
-            }
-            else if(pState == QAbstractSocket::ListeningState)
-            {
-                qDebug()<<"Ip: "<<sender->peerAddress()
-                       <<"Port: "<<sender->peerPort()
-                      <<"listening.";
-            }
-
-            else if (pState == QAbstractSocket::UnconnectedState)
-            {
-                qDebug()<<"Ip: "<<sender->peerAddress()
-                       <<"Port: "<<sender->peerPort()
-                      <<"disconnected.";
-
+            if (pState == QAbstractSocket::UnconnectedState)
                 mSockets.removeOne(sender);
-            }
 
-            connectionStateChanged(mHostAdress,mPort,pState);
+            emit connectionStateChanged(mHostAdress,mPort,pState);
 
         });
 
@@ -101,13 +112,10 @@ void ETCPServer::onNewConnection()
         connect(socket, &QAbstractSocket::errorOccurred,this, [this](QAbstractSocket::SocketError)
         {
             QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
-            qDebug()<<"Ip: "<<sender->peerAddress()<<
-                      "Port: "<<sender->peerPort()<<
-                      "error occured. Error["<<
-                      sender->errorString()<<"]";
+            qDebug()<<"[ETCPServer] -- Error occured "<<sender->peerAddress()<<
+                      " "<<sender->peerPort()<<
+                      sender->errorString();
         });
-
-
     }
 
 }

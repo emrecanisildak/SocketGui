@@ -18,6 +18,9 @@ public:
     void init();
     bool hasConnection() const;
 
+    void closeHostService();
+    void listenClient(QString pHostAdress, quint16 pPort);
+
 signals:
     void dataReceived(const QByteArray& pData);
     void connectionStateChanged(const QString& ip, uint16_t port, QAbstractSocket::SocketState state);

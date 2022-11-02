@@ -13,9 +13,10 @@ ETCPClient::ETCPClient(QString pHostAdress, quint16 pPort, QObject *parent)
 
 ETCPClient::~ETCPClient()
 {
-    qDebug()<<"Client say to goodBye.."<<mHostAdress<<"  "<<mPort;
+    qDebug()<<"[ETCPClient] --  Client say to goodBye.."<<mHostAdress<<"  "<<mPort;
     mTimer.stop();
     mSocket->close();
+
 }
 
 void ETCPClient::init()
@@ -29,10 +30,10 @@ void ETCPClient::init()
     // Try to connect
     connect(&mTimer,&QTimer::timeout,this, [this](){
         if(mState != QAbstractSocket::SocketState::ConnectedState
-        && mState != QAbstractSocket::SocketState::HostLookupState
-        && mState != QAbstractSocket::SocketState::ConnectingState)
+                && mState != QAbstractSocket::SocketState::HostLookupState
+                && mState != QAbstractSocket::SocketState::ConnectingState)
         {
-            qDebug()<<"Try to connect"<<mHostAdress<<mPort;
+            qDebug()<<"[ETCPClient] --  Try to connect"<<mHostAdress<<mPort;
             mSocket->connectToHost(mHostAdress, mPort);
         }
     });
@@ -40,12 +41,10 @@ void ETCPClient::init()
     mTimer.start(500);
 
 
-
-
     connect(mSocket, &QTcpSocket::stateChanged,
             this,    [this](QAbstractSocket::SocketState pState)
     {
-        qDebug()<<"State Changed!"<<pState;
+        qDebug()<<"[ETCPClient] --  State Changed!"<<pState<<"  "<<mHostAdress<<mPort;
         mState = pState;
         emit connectionStateChanged(mHostAdress,mPort,mState);
     });
@@ -55,6 +54,20 @@ void ETCPClient::init()
 bool ETCPClient::isConnected() const
 {
     return mState == QAbstractSocket::SocketState::ConnectedState;
+}
+
+void ETCPClient::disconnectFromHost()
+{
+    mTimer.stop();
+    mSocket->disconnectFromHost();
+}
+
+void ETCPClient::tryToConnect(QString pHostAdress, quint16 pPort)
+{
+    mHostAdress = pHostAdress;
+    mPort       = pPort;
+
+    mTimer.start(500);
 }
 
 void ETCPClient::writeData(const QByteArray &pData)

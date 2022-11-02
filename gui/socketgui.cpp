@@ -39,6 +39,31 @@ uint32_t SocketGui::uniqueId() const
     return mUniqueId;
 }
 
+bool SocketGui::connectionButtonState() const
+{
+    return mConnectionButtonState;
+}
+
+void SocketGui::toggleConnectionButtonState()
+{
+    mConnectionButtonState = !mConnectionButtonState;
+
+    if(mConnectionButtonState)
+    {
+        // Connect State ------------------------
+        ui->radioButtonClient->setDisabled(true);
+        ui->radioButtonServer->setDisabled(true);
+        ui->buttonConnect->setText(tr("Close"));
+
+    }
+    else
+    {
+        ui->buttonConnect->setText(tr("Connect"));
+        ui->radioButtonClient->setDisabled(false);
+        ui->radioButtonServer->setDisabled(false);
+    }
+}
+
 void SocketGui::initGui()
 {
     // Clsoe Button
@@ -66,40 +91,78 @@ void SocketGui::initGui()
 
     connect(ui->buttonConnect, &QPushButton::clicked, [this](bool checked)
     {
-        if(mSocketType ==  SocketType::CLIENT)
-        {
-            auto ip = ui->lineEdit_ip->text();
-            auto port = ui->lineEdit_port->text();
+        toggleConnectionButtonState();
 
-            mClient = new ETCPClient(ip,port.toInt());
-            mClient->init();
-
-            connect(mClient, &ETCPClient::connectionStateChanged,this,[this](const QString& ip, uint16_t port, QAbstractSocket::SocketState state)
+        if(connectionButtonState()){
+            if(mSocketType ==  SocketType::CLIENT)
             {
-                if(state == QAbstractSocket::SocketState::ConnectedState)
-                    setConnection(true);
+                auto ip = ui->lineEdit_ip->text();
+                auto port = ui->lineEdit_port->text();
+
+                // Client
+                if(mClient == nullptr){
+
+                    mClient = new ETCPClient(ip,port.toInt());
+                    mClient->init();
+                    connect(mClient, &ETCPClient::connectionStateChanged,this,[this](const QString& ip, uint16_t port, QAbstractSocket::SocketState state)
+                    {
+                        if(state == QAbstractSocket::SocketState::ConnectedState)
+                            setConnection(true);
+                        else
+                            setConnection(false);
+
+                    });
+                }
+                // Client ikinci ilklenmesi
+                else{
+                    mClient->tryToConnect(ip,port.toInt());
+                }
+
+
+
+            }
+            else
+            {
+                auto ip = ui->lineEdit_ip->text();
+                auto port = ui->lineEdit_port->text();
+
+                // Server ilk defa ilkleniyorsa
+                if(mServer == nullptr){
+                    mServer = new ETCPServer(ip,port.toInt());
+                    mServer->init();
+
+
+                    connect(mServer, &ETCPServer::connectionStateChanged,this,[this](const QString& ip, uint16_t port, QAbstractSocket::SocketState state)
+                    {
+                        if(state == QAbstractSocket::SocketState::ConnectedState)
+                            setConnection(true);
+                        else
+                            setConnection(false);
+                    });
+                }
+                // Server 2. defa ilkleniyorsa
                 else
-                    setConnection(false);
-            });
+                {
+                    mServer->listenClient(ip,port.toInt());
+                }
+            }
+        }
+
+        // NOT CONNECTION STATE -------------------
+        else{
+
+            if(mSocketType ==  SocketType::CLIENT)
+            {
+                //
+                mClient->disconnectFromHost();
+            }
+            else{
+                mServer->closeHostService();
+            }
+
 
         }
-        else
-        {
-            auto ip = ui->lineEdit_ip->text();
-            auto port = ui->lineEdit_port->text();
 
-            mServer = new ETCPServer(ip,port.toInt());
-            mServer->init();
-
-
-            connect(mServer, &ETCPServer::connectionStateChanged,this,[this](const QString& ip, uint16_t port, QAbstractSocket::SocketState state)
-            {
-                if(state == QAbstractSocket::SocketState::ConnectedState)
-                    setConnection(true);
-                else
-                    setConnection(false);
-            });
-        }
     });
 
 

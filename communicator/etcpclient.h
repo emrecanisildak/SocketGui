@@ -16,6 +16,8 @@ public:
 
     void init();
     bool isConnected() const;
+    void disconnectFromHost();
+    void tryToConnect(QString pHostAdress, quint16 pPort);
 
 signals:
     void dataReceived(const QByteArray& pData);

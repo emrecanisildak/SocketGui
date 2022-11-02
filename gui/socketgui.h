@@ -48,6 +48,11 @@ private:
 
     SocketType mSocketType = SocketType::SERVER;
 
+    bool mConnectionButtonState = false;
+
+    bool connectionButtonState()const;
+    void toggleConnectionButtonState();
+
 
 
     void initGui();
